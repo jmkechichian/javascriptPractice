@@ -1,13 +1,13 @@
 class Persona{
-constructor(nombre, edad, género){
+constructor(nombre, edad, genero){
 this.nombre = nombre;
 this.edad = edad;
-this.genero = género;
+this.genero = genero;
 };
 //Método Saludar
 
 saludar(){
-consolé.log("Hola" + this.nombre);
+console.log("Hola" + this.nombre);
 }
 
 }
