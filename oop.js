@@ -12,10 +12,10 @@ class Persona {
 }
 
 class Estudiante extends Persona {
-  constructor(nombre, edad, genero, curso, notas) {
+  constructor(nombre, edad, genero, curso, notas = []) {
     super(nombre, edad, genero);
     this.curso = curso;
-    this.notas = notas;
+    this.notas = Array.isArray(notas) ? notas : [];
   }
 
   // Método para calcular el promedio 
