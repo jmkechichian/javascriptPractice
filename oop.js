@@ -9,6 +9,11 @@ class Persona {
   saludar() {
     console.log("Hola " + this.nombre);
   }
+
+  //Método cumpleaños
+  cumpleanios(){
+    return this.edad++
+  }
 }
 
 class Estudiante extends Persona {
