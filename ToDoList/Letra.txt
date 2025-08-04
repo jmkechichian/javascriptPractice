@@ -1,0 +1,103 @@
+### **📝 To-Do List Avanzada - Especificación Técnica (Problem Statement)**  
+
+**Objetivo**:  
+Desarrollar una aplicación de **To-Do List** con funcionalidades avanzadas usando **React + TypeScript + Tailwind CSS**, que permita gestionar tareas de manera eficiente con persistencia de datos y una interfaz intuitiva.  
+
+---
+
+#### **📌 Requisitos Funcionales**  
+
+1. **CRUD de Tareas**  
+   - **Agregar**: Input para nueva tarea (texto + botón "Añadir").  
+   - **Mostrar**: Lista de tareas con checkbox para completar/marcar pendiente.  
+   - **Editar**: Doble clic en una tarea para modificar su texto (*inline editing*).  
+   - **Eliminar**: Botón (🗑️) para borrar tareas individuales.  
+
+//completada
+
+2. **Filtrado y Búsqueda**  
+   - Filtros por estado: "Todas", "Pendientes", "Completadas".  
+   - Búsqueda en tiempo real (input de texto que filtre las tareas coincidentes).  
+   //completada
+
+3. **Persistencia de Datos**  
+   - Guardar las tareas en `localStorage` (recargar la página sin perder datos).  
+
+4. **Animaciones y Feedback Visual**  
+   - Transiciones al agregar/eliminar tareas (ej. Framer Motion o CSS `@keyframes`).  
+   - Notificación toast al completar/eliminar una tarea (ej. "Tarea completada ✅").  
+
+   //completada
+
+5. **Estadísticas**  
+   - Contador de tareas: total, pendientes y completadas (ej. "3/5 tareas completadas").  
+  //Completada
+---
+
+#### **🎨 Requisitos de UI/UX**  
+- **Diseño**: Usar Tailwind CSS para estilos (responsive en móvil/desktop).  
+- **Tema Oscuro/Claro**: Toggle para cambiar entre modos (usando Tailwind `dark:`).  
+- **Drag & Drop** (Opcional): Reordenar tareas arrastrándolas (librería `react-dnd` o `dnd-kit`).  
+
+---
+
+#### **⚙️ Requisitos Técnicos**  
+- **TypeScript**:  
+  - Interfaces para tipar tareas:  
+    ```ts
+    interface Task {
+      id: string; // UUID o timestamp
+      text: string;
+      completed: boolean;
+      createdAt: Date; // Opcional para ordenar
+    }
+    ```  
+  - Tipos para filtros: `type FilterStatus = "all" | "active" | "completed"`.  
+
+- **React**:  
+  - Estado global con `useReducer` o Zustand (opcional para escalar).  
+  - Custom hooks (ej. `useLocalStorage` para persistencia).  
+
+- **Testing** (Opcional):  
+  - Tests unitarios con Vitest/Jest (ej. probar el filtrado de tareas).  
+
+---
+
+#### **📦 Estructura de Componentes (Sugerida)**  
+```markdown
+src/  
+├── components/  
+│   ├── TaskList.tsx       # Lista + filtros  
+│   ├── TaskItem.tsx       # Item individual (checkbox, texto, botones)  
+│   ├── AddTask.tsx        # Input de nueva tarea  
+│   └── Stats.tsx          # Contadores  
+├── hooks/  
+│   └── useLocalStorage.ts # Custom hook  
+├── styles/  
+│   └── tailwind.css       # Config de Tailwind  
+└── App.tsx                # Estado principal + provider de tema
+```
+
+---
+
+#### **🎯 Bonus Points (Extras)**  
+- **Undo/Redo**: Implementar un stack de acciones para deshacer (ej. borrar una tarea por error).  
+- **Tags/Categorías**: Añadir etiquetas de color a las tareas y filtrar por ellas.  
+- **Sync entre pestañas**: Usar `window.addEventListener("storage", ...)` para sincronizar cambios.  
+
+---
+
+### **💡 Preguntas Clave para Empezar**  
+1. ¿Cómo estructurarías el estado para manejar tareas y filtros?  
+2. ¿Qué librerías de animación prefieres (Framer Motion, CSS puro)?  
+3. ¿Quieres integrar un backend en el futuro (ej. Firebase)?  
+
+**¡Manos a la obra!** Si necesitas ayuda con algún componente o lógica, dime y te guío paso a paso. 🔥  
+
+**Ejemplo de código inicial**:  
+```tsx
+// Ejemplo de estado inicial en App.tsx
+const [tasks, setTasks] = useState<Task[]>([]);
+const [filter, setFilter] = useState<FilterStatus>("all");
+```  
+
