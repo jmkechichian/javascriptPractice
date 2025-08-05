@@ -13,53 +13,202 @@ const state = {
 // Función para mostrar notificaciones Toast
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
+    toast.className = `fixed bottom-5 left-1/2 transform -translate-x-1/2 translate-y-24 py-4 px-6 rounded-full shadow-lg z-50 opacity-0 transition-all duration-300 flex items-center gap-3 max-w-[80%] whitespace-nowrap ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+    } text-white`;
+    
     toast.innerHTML = `
-        <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-xmark' : 'fa-circle-info'}"></i>
-        ${message}
+        <i class="fa-solid ${
+            type === 'success' ? 'fa-circle-check' : 
+            type === 'error' ? 'fa-circle-xmark' : 'fa-circle-info'
+        }"></i>
+        <span class="toast-message">${message}</span>
     `;
     
     document.body.appendChild(toast);
     
-    setTimeout(() => toast.classList.add('show'), 100);
     setTimeout(() => {
-        toast.classList.remove('show');
+        toast.classList.remove('translate-y-24');
+        toast.classList.add('translate-y-0');
+        toast.classList.remove('opacity-0');
+        toast.classList.add('opacity-100');
+    }, 100);
+    
+    setTimeout(() => {
+        toast.classList.remove('translate-y-0');
+        toast.classList.add('translate-y-24');
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
-// Función para actualizar el contador de tareas
+// Función para guardar estado en localStorage
+const saveCurrentState = () => {
+    const tasks = Array.from(document.querySelectorAll('#task-list li')).map(li => ({
+        text: li.querySelector('.task-text').textContent,
+        completed: li.querySelector('.checkbox').checked,
+        id: li.dataset.id || Date.now().toString()
+    }));
+    localStorage.setItem('todoTasks', JSON.stringify(tasks));
+};
+
+// Función para cargar tareas guardadas
+const loadSavedTasks = () => {
+    const savedTasks = JSON.parse(localStorage.getItem('todoTasks'));
+    if (savedTasks) {
+        savedTasks.forEach(task => {
+            createTaskElement(task.text, task.completed, task.id);
+        });
+    }
+};
+
+// Función para crear elementos de tarea
+const createTaskElement = (text, completed = false, id = null) => {
+    const li = document.createElement('li');
+    li.className = `flex items-center justify-between p-3 rounded-lg ${
+        completed ? 'bg-primary-200 dark:bg-dark-400' : 'bg-white dark:bg-dark-300'
+    } border border-primary-200 dark:border-dark-400 shadow-sm transition-all`;
+    li.dataset.id = id || Date.now().toString();
+    
+    li.innerHTML = `
+        <div class="flex items-center flex-1 min-w-0">
+            <input type="checkbox" class="checkbox h-5 w-5 rounded border-2 ${
+                completed ? 
+                'border-accent-green bg-accent-green' : 
+                'border-primary-300 dark:border-dark-200 bg-white dark:bg-dark-400'
+            } appearance-none cursor-pointer transition-all">
+            <span class="task-text ml-3 truncate ${
+                completed ? 
+                'line-through text-primary-500 dark:text-primary-400' : 
+                'text-primary-700 dark:text-primary-100'
+            }">${text}</span>
+        </div>
+        <div class="task-buttons flex gap-2 ml-3">
+            <button class="edit-btn p-2 rounded-full ${
+                completed ? 
+                'bg-primary-300 dark:bg-dark-200 cursor-not-allowed opacity-50' : 
+                'bg-accent-yellow hover:bg-amber-500'
+            } text-white transition-all">
+                <i class="fa-solid fa-pen text-xs"></i>
+            </button>
+            <button class="delete-btn p-2 rounded-full bg-accent-pink hover:bg-pink-600 text-white transition-all">
+                <i class="fa-solid fa-trash text-xs"></i>
+            </button>
+        </div>
+    `;
+    
+    document.getElementById('task-list').appendChild(li);
+    setupTaskEvents(li);
+    return li;
+};
+
+
+// Función para actualizar el contador
 const updateTaskCounter = () => {
     const totalTasks = document.querySelectorAll('#task-list li').length;
     const completedTasks = document.querySelectorAll('#task-list li .checkbox:checked').length;
     const taskCounter = document.querySelector('.task-counter');
 
-    taskCounter.classList.toggle('visible', totalTasks > 0);
+    taskCounter.classList.toggle('hidden', totalTasks === 0);
+    taskCounter.classList.toggle('opacity-0', totalTasks === 0);
+    taskCounter.classList.toggle('translate-y-2.5', totalTasks === 0);
     
     if (totalTasks > 0) {
         document.getElementById('completed-count').textContent = completedTasks;
         document.getElementById('total-count').textContent = totalTasks;
         
-        const progressPercentage = (completedTasks / totalTasks) * 100;
+        const progressPercentage = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progress-percentage').textContent = `${progressPercentage}%`;
+        
         const progressBarEl = document.querySelector('.progress');
         progressBarEl.style.width = `${progressPercentage}%`;
-        progressBarEl.style.background = completedTasks === totalTasks ? '#4CAF50' : 'linear-gradient(90deg, #ff6f91, #4CAF50)';
+        progressBarEl.className = `progress h-full rounded-full transition-all duration-300 ${
+            completedTasks === totalTasks ? 'bg-accent-green' : 'bg-gradient-to-r from-accent-pink to-accent-green'
+        }`;
     }
 };
 
 // Función para alternar estado vacío
 const toggleEmptyState = () => {
-    const visibleTasks = document.querySelectorAll('li:not([style*="display: none"])');
-    const emptyImage = document.querySelector('.empty-img');
-    const todosContainer = document.querySelector('.todos-container');
+    const visibleTasks = document.querySelectorAll('#task-list li:not(.hidden)');
+    const emptyStateContainer = document.querySelector('.empty-state-container');
+    const taskList = document.getElementById('task-list');
     
-    emptyImage.style.display = visibleTasks.length === 0 ? 'block' : 'none';
-    todosContainer.style.width = visibleTasks.length > 0 ? '100%' : '50%';
+    if (visibleTasks.length === 0) {
+        taskList.style.display = 'none';
+        emptyStateContainer.style.display = 'flex';
+    } else {
+        taskList.style.display = 'block';
+        emptyStateContainer.style.display = 'none';
+    }
+    
+    updateTaskCounter();
 };
-
 // =============================================
 // FUNCIONES PRINCIPALES
 // =============================================
+
+// Configura eventos para una tarea
+const setupTaskEvents = (li) => {
+    const checkbox = li.querySelector('.checkbox');
+    const taskSpan = li.querySelector('.task-text');
+    const editBtn = li.querySelector('.edit-btn');
+    const deleteBtn = li.querySelector('.delete-btn');
+
+    const editTask = () => {
+        if (checkbox.checked) return;
+        const newText = prompt('Editar tarea:', taskSpan.textContent);
+        if (newText !== null && newText.trim() !== '') {
+            taskSpan.textContent = newText.trim();
+            taskSpan.classList.remove('line-through', 'text-primary-500', 'dark:text-primary-400');
+            filterTasks();
+            saveCurrentState();
+        }
+    };
+
+    const deleteTask = () => {
+        li.remove();
+        updateTaskCounter();
+        toggleEmptyState();
+        saveCurrentState();
+        showToast('Tarea eliminada', 'error');
+    };
+
+    editBtn.addEventListener('click', editTask);
+    deleteBtn.addEventListener('click', deleteTask);
+    
+    checkbox.addEventListener('change', () => {
+        taskSpan.classList.toggle('line-through', checkbox.checked);
+        taskSpan.classList.toggle('text-primary-500', checkbox.checked);
+        taskSpan.classList.toggle('dark:text-primary-400', checkbox.checked);
+        
+        editBtn.disabled = checkbox.checked;
+        editBtn.classList.toggle('bg-primary-300', checkbox.checked);
+        editBtn.classList.toggle('dark:bg-dark-200', checkbox.checked);
+        editBtn.classList.toggle('cursor-not-allowed', checkbox.checked);
+        editBtn.classList.toggle('opacity-50', checkbox.checked);
+        editBtn.classList.toggle('bg-accent-yellow', !checkbox.checked);
+        editBtn.classList.toggle('hover:bg-amber-500', !checkbox.checked);
+        
+        li.classList.toggle('bg-primary-200', checkbox.checked);
+        li.classList.toggle('dark:bg-dark-400', checkbox.checked);
+        li.classList.toggle('bg-white', !checkbox.checked);
+        li.classList.toggle('dark:bg-dark-300', !checkbox.checked);
+        
+        checkbox.classList.toggle('border-accent-green', checkbox.checked);
+        checkbox.classList.toggle('bg-accent-green', checkbox.checked);
+        checkbox.classList.toggle('border-primary-300', !checkbox.checked);
+        checkbox.classList.toggle('dark:border-dark-200', !checkbox.checked);
+        checkbox.classList.toggle('bg-white', !checkbox.checked);
+        checkbox.classList.toggle('dark:bg-dark-400', !checkbox.checked);
+        
+        filterTasks();
+        saveCurrentState();
+        showToast(checkbox.checked ? 'Tarea completada!' : 'Tarea pendiente', checkbox.checked ? 'success' : 'info');
+    });
+};
 
 // Función para filtrar tareas
 const filterTasks = () => {
@@ -70,16 +219,14 @@ const filterTasks = () => {
         const isCompleted = task.querySelector('.checkbox').checked;
         let shouldShow = true;
         
-        // Aplicar filtro de estado
         if (state.currentFilter === 'active' && isCompleted) shouldShow = false;
         else if (state.currentFilter === 'completed' && !isCompleted) shouldShow = false;
         
-        // Aplicar filtro de búsqueda
         if (state.searchTerm && !text.includes(state.searchTerm.toLowerCase())) {
             shouldShow = false;
         }
         
-        task.style.display = shouldShow ? 'flex' : 'none';
+        task.classList.toggle('hidden', !shouldShow);
     });
     
     toggleEmptyState();
@@ -94,55 +241,12 @@ const addTask = (event) => {
     
     if (!taskText) return;
 
-    const li = document.createElement('li');
-    li.innerHTML = `
-        <input type="checkbox" class="checkbox">
-        <span class="task-text">${taskText}</span>
-        <div class="task-buttons">
-            <button class="edit-btn"><i class="fa-solid fa-pen"></i></button>
-            <button class="delete-btn"><i class="fa-solid fa-trash"></i></button>
-        </div>
-    `;
-
-    const setupTaskEvents = (li) => {
-        const checkbox = li.querySelector('.checkbox');
-        const taskSpan = li.querySelector('.task-text');
-        const editBtn = li.querySelector('.edit-btn');
-        const deleteBtn = li.querySelector('.delete-btn');
-
-        const editTask = () => {
-            if (checkbox.checked) return;
-            const newText = prompt('Editar tarea:', taskSpan.textContent);
-            if (newText !== null && newText.trim() !== '') {
-                taskSpan.textContent = newText.trim();
-                filterTasks();
-            }
-        };
-
-        const deleteTask = () => {
-            li.remove();
-            updateTaskCounter();
-            toggleEmptyState();
-            showToast('Tarea eliminada', 'error');
-        };
-
-        editBtn.addEventListener('click', editTask);
-        deleteBtn.addEventListener('click', deleteTask);
-        
-        checkbox.addEventListener('change', () => {
-            taskSpan.style.textDecoration = checkbox.checked ? 'line-through' : 'none';
-            editBtn.disabled = checkbox.checked;
-            editBtn.style.opacity = checkbox.checked ? '0.5' : '1';
-            filterTasks();
-        });
-    };
-
-    setupTaskEvents(li);
-    document.getElementById('task-list').appendChild(li);
+    createTaskElement(taskText);
     
     taskInput.value = '';
     filterTasks();
     updateTaskCounter();
+    saveCurrentState();
     showToast('Tarea agregada correctamente', 'success');
 };
 
@@ -158,8 +262,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const displayFiltersBtn = document.getElementById('display-filters');
     const filtersContainer = document.querySelector('.controls');
 
+    // Cargar tareas guardadas
+    loadSavedTasks();
+
     // Configuración inicial
-    filtersContainer.style.display = 'none';
+    filtersContainer.classList.add('hidden');
     filterButtons[0].classList.add('active');
     toggleEmptyState();
     updateTaskCounter();
@@ -167,18 +274,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Evento para mostrar/ocultar filtros
     displayFiltersBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        const isVisible = filtersContainer.style.display === 'block';
-        filtersContainer.style.display = isVisible ? 'none' : 'block';
+        filtersContainer.classList.toggle('hidden');
         
-        displayFiltersBtn.classList.toggle('fa-times', !isVisible);
-        displayFiltersBtn.classList.toggle('fa-filter', isVisible);
+        // Cambiar ícono
+        const icon = displayFiltersBtn.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('fa-times');
+            icon.classList.toggle('fa-filter');
+        }
     });
 
     // Event listeners para filtros
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
+            filterButtons.forEach(btn => btn.classList.remove('active', 'bg-green-500'));
+            button.classList.add('active', 'bg-green-500');
             state.currentFilter = button.dataset.filter;
             filterTasks();
         });
@@ -195,20 +305,4 @@ document.addEventListener('DOMContentLoaded', () => {
     taskInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') addTask(e);
     });
-});    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+});
